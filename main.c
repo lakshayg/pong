@@ -6,7 +6,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2_gfxPrimitives.h"
 
-const double WIN_H_PADDING = 0.0;
+const double WIN_H_PADDING = 100.0;
 const double WIN_WIDTH = 800.0;
 const double WIN_HEIGHT = 600.0;
 const double WIN_WIDTH_2 = WIN_WIDTH / 2.0;
@@ -14,8 +14,11 @@ const double WIN_WIDTH_2 = WIN_WIDTH / 2.0;
 const double PADDLE_WIDTH = 25.0;
 const double PADDLE_HEIGHT = 150.0;
 const double PADDLE_SPEED = 0.5;
+const double PADDLE_WIDTH_2 = PADDLE_WIDTH / 2.0;
+const double PADDLE_HEIGHT_2 = PADDLE_HEIGHT / 2.0;
 
 const double BALL_RADIUS = 20.0;
+const double BALL_RADIUS_SQ = BALL_RADIUS * BALL_RADIUS;
 
 typedef struct Ball
 {
@@ -47,37 +50,105 @@ SqDist(double x1, double y1, double x2, double y2)
 bool
 EvaluateCollisionWithPaddle(Ball* ball, const Paddle* paddle)
 {
-  if (ball->vx < 0.0) {
-    if (((ball->x <= paddle->x + PADDLE_WIDTH + BALL_RADIUS) &&
-         (ball->y >= paddle->y) && (ball->y <= paddle->y + PADDLE_HEIGHT)) ||
-        ((ball->x <= paddle->x + PADDLE_WIDTH) &&
-         (ball->y >= paddle->y - BALL_RADIUS) &&
-         (ball->y <= paddle->y + BALL_RADIUS)) ||
-        (SqDist(paddle->x + PADDLE_WIDTH, paddle->y, ball->x, ball->y) <=
-         BALL_RADIUS * BALL_RADIUS) ||
-        (SqDist(paddle->x + PADDLE_WIDTH,
-                paddle->y + PADDLE_HEIGHT,
-                ball->x,
-                ball->y) <= BALL_RADIUS * BALL_RADIUS)) {
-      ball->x = 2.0 * (paddle->x + PADDLE_WIDTH + BALL_RADIUS) - ball->x;
-      ball->vx *= -1.0;
-      return true;
-    }
+
+  // collision with left boundary
+  if (
+  (ball->vx > 0.0) &&
+  (ball->x >= paddle->x - BALL_RADIUS) &&
+  (ball->x <= paddle->x + PADDLE_WIDTH_2) &&
+  (ball->y >= paddle->y) &&
+  (ball->y <= paddle->y + PADDLE_HEIGHT)) {
+    ball->vx *= -1.0;
+    ball->x = 2.0 * (paddle->x - BALL_RADIUS) - ball->x;
+    return true;
   }
 
-  if (ball->vx > 0.0) {
-    if (((ball->x >= paddle->x - BALL_RADIUS) && (ball->y >= paddle->y) &&
-         (ball->y <= paddle->y + PADDLE_HEIGHT)) ||
-        ((ball->x >= paddle->x) && (ball->y >= paddle->y - BALL_RADIUS) &&
-         (ball->y <= paddle->y + BALL_RADIUS)) ||
-        (SqDist(paddle->x, paddle->y, ball->x, ball->y) <=
-         BALL_RADIUS * BALL_RADIUS) ||
-        (SqDist(paddle->x, paddle->y + PADDLE_HEIGHT, ball->x, ball->y) <=
-         BALL_RADIUS * BALL_RADIUS)) {
-      ball->x = 2.0 * (paddle->x - BALL_RADIUS) - ball->x;
-      ball->vx *= -1.0;
-      return true;
-    }
+  // collision with right boundary
+  if (
+  (ball->vx < 0.0) &&
+  (ball->x <= paddle->x + PADDLE_WIDTH + BALL_RADIUS) &&
+  (ball->x >= paddle->x + PADDLE_WIDTH_2) &&
+  (ball->y >= paddle->y) &&
+  (ball->y <= paddle->y + PADDLE_HEIGHT)) {
+    ball->vx *= -1.0;
+    ball->x = 2.0 * (paddle->x + PADDLE_WIDTH + BALL_RADIUS) - ball->x;
+    return true;
+  }
+
+  // collision with top boundary
+  if (
+  (ball->vy > 0.0) &&
+  (ball->x >= paddle->x) &&
+  (ball->x <= paddle->x + PADDLE_WIDTH) &&
+  (ball->y >= paddle->y - BALL_RADIUS) &&
+  (ball->y <= paddle->y + PADDLE_HEIGHT_2)) {
+    ball->vy *= -1.0;
+    ball->y = 2.0 * (paddle->y - BALL_RADIUS) - ball->y;
+    return true;
+  }
+
+  // collision with bottom boundary
+  if (
+  (ball->vy < 0.0) &&
+  (ball->x >= paddle->x) &&
+  (ball->x <= paddle->x + PADDLE_WIDTH) &&
+  (ball->y >= paddle->y + PADDLE_HEIGHT_2) &&
+  (ball->y <= paddle->y + PADDLE_HEIGHT + BALL_RADIUS)) {
+    ball->vy *= -1.0;
+    ball->y = 2.0 * (paddle->y + PADDLE_HEIGHT + BALL_RADIUS) - ball->y;
+    return true;
+  }
+
+  // collision with top left corner
+  if (SqDist(paddle->x, paddle->y, ball->x, ball->y) <= BALL_RADIUS_SQ) {
+    double paddle_to_ball_x = ball->x - paddle->x;
+    double paddle_to_ball_y = ball->y - paddle->y;
+    double norm = hypot(paddle_to_ball_x, paddle_to_ball_y);
+    paddle_to_ball_x /= norm;
+    paddle_to_ball_y /= norm;
+    double vel_along_normal = paddle_to_ball_x * ball->vx + paddle_to_ball_y * ball->vy;
+    ball->vx -= 2 * vel_along_normal * paddle_to_ball_x;
+    ball->vy -= 2 * vel_along_normal * paddle_to_ball_y;
+    return true;
+  }
+
+  // collision with bottom left corner
+  if (SqDist(paddle->x, paddle->y + PADDLE_HEIGHT, ball->x, ball->y) <= BALL_RADIUS_SQ) {
+    double paddle_to_ball_x = ball->x - paddle->x;
+    double paddle_to_ball_y = ball->y - (paddle->y + PADDLE_HEIGHT);
+    double norm = hypot(paddle_to_ball_x, paddle_to_ball_y);
+    paddle_to_ball_x /= norm;
+    paddle_to_ball_y /= norm;
+    double vel_along_normal = paddle_to_ball_x * ball->vx + paddle_to_ball_y * ball->vy;
+    ball->vx -= 2 * vel_along_normal * paddle_to_ball_x;
+    ball->vy -= 2 * vel_along_normal * paddle_to_ball_y;
+    return true;
+  }
+
+  // collision with top right corner
+  if (SqDist(paddle->x + PADDLE_WIDTH, paddle->y, ball->x, ball->y) <= BALL_RADIUS_SQ) {
+    double paddle_to_ball_x = ball->x - (paddle->x + PADDLE_WIDTH);
+    double paddle_to_ball_y = ball->y - paddle->y;
+    double norm = hypot(paddle_to_ball_x, paddle_to_ball_y);
+    paddle_to_ball_x /= norm;
+    paddle_to_ball_y /= norm;
+    double vel_along_normal = paddle_to_ball_x * ball->vx + paddle_to_ball_y * ball->vy;
+    ball->vx -= 2 * vel_along_normal * paddle_to_ball_x;
+    ball->vy -= 2 * vel_along_normal * paddle_to_ball_y;
+    return true;
+  }
+
+  // collision with bottom right corner
+  if (SqDist(paddle->x + PADDLE_WIDTH, paddle->y + PADDLE_HEIGHT, ball->x, ball->y) <= BALL_RADIUS_SQ) {
+    double paddle_to_ball_x = ball->x - (paddle->x + PADDLE_WIDTH);
+    double paddle_to_ball_y = ball->y - (paddle->y + PADDLE_HEIGHT);
+    double norm = hypot(paddle_to_ball_x, paddle_to_ball_y);
+    paddle_to_ball_x /= norm;
+    paddle_to_ball_y /= norm;
+    double vel_along_normal = paddle_to_ball_x * ball->vx + paddle_to_ball_y * ball->vy;
+    ball->vx -= 2 * vel_along_normal * paddle_to_ball_x;
+    ball->vy -= 2 * vel_along_normal * paddle_to_ball_y;
+    return true;
   }
 
   return false;
@@ -155,8 +226,8 @@ AdvanceState(GameState* state, Uint64 time, int push)
       state->paddle[state->active_paddle].y = WIN_HEIGHT - PADDLE_HEIGHT;
     }
 
-    EvaluateCollisionWithPaddle(&state->ball,
-                                &state->paddle[state->active_paddle]);
+    EvaluateCollisionWithPaddle(&state->ball, &state->paddle[0]);
+    EvaluateCollisionWithPaddle(&state->ball, &state->paddle[1]);
 
     state->active_paddle = (state->ball.vx > 0.0);
   }
