@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "SDL2/SDL.h"
-#include "SDL2_gfxPrimitives.h"
 
 const double WIN_H_PADDING = 100.0;
 const double WIN_WIDTH = 800.0;
@@ -155,6 +154,25 @@ EvaluateCollisionWithPaddle(Ball* ball, const Paddle* paddle)
 }
 
 void
+RenderCircle(SDL_Renderer* renderer, int cx, int cy, int radius)
+{
+  int x = radius;
+  int y = 0;
+  int error = 3 - 2 * radius;
+
+  while (x >= y) {
+    SDL_RenderDrawLine(renderer, cx - y, cy + x, cx + y, cy + x);
+    SDL_RenderDrawLine(renderer, cx - x, cy + y, cx + x, cy + y);
+    SDL_RenderDrawLine(renderer, cx - y, cy - x, cx + y, cy - x);
+    SDL_RenderDrawLine(renderer, cx - x, cy - y, cx + x, cy - y);
+    if (error > 0) {
+      error -= 4 * (--x);
+    }
+    error += 4 * (++y) + 2;
+  }
+}
+
+void
 RenderGame(SDL_Renderer* renderer, GameState* state)
 {
   // Background
@@ -187,8 +205,8 @@ RenderGame(SDL_Renderer* renderer, GameState* state)
   SDL_RenderDrawLine(renderer, 0, WIN_HEIGHT - 1, WIN_WIDTH, WIN_HEIGHT - 1);
 
   // Ball
-  filledCircleColor(
-    renderer, state->ball.x, state->ball.y, BALL_RADIUS, 0xff0000ff);
+  SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+  RenderCircle(renderer, state->ball.x, state->ball.y, BALL_RADIUS);
 }
 
 void
