@@ -179,30 +179,29 @@ RenderGame(SDL_Renderer* renderer, GameState* state)
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
-  // Paddles
-  SDL_Rect paddles[2] = {
-    [0] = {
-      .x = (int)state->paddle[0].x,
-      .y = (int)state->paddle[0].y,
-      .w = PADDLE_WIDTH,
-      .h = PADDLE_HEIGHT,
-    },
-    [1] = {
-      .x = (int)state->paddle[1].x,
-      .y = (int)state->paddle[1].y,
-      .w = PADDLE_WIDTH,
-      .h = PADDLE_HEIGHT,
-    },
+  // Active Paddle
+  SDL_Rect active_paddle = {
+    .x = state->paddle[state->active_paddle].x,
+    .y = state->paddle[state->active_paddle].y,
+    .w = PADDLE_WIDTH,
+    .h = PADDLE_HEIGHT,
   };
-
   SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-  SDL_RenderFillRects(renderer, paddles, 2);
+  SDL_RenderFillRect(renderer, &active_paddle);
 
-  // Lines
-  SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+  // Inactive Paddle
+  SDL_Rect inactive_paddle = {
+    .x = state->paddle[1 - state->active_paddle].x,
+    .y = state->paddle[1 - state->active_paddle].y,
+    .w = PADDLE_WIDTH,
+    .h = PADDLE_HEIGHT,
+  };
+  SDL_SetRenderDrawColor(renderer, 100, 100, 100, SDL_ALPHA_OPAQUE);
+  SDL_RenderFillRect(renderer, &inactive_paddle);
+
+  // Center Line
+  SDL_SetRenderDrawColor(renderer, 50, 50, 50, SDL_ALPHA_OPAQUE);
   SDL_RenderDrawLine(renderer, WIN_WIDTH_2, 0, WIN_WIDTH_2, WIN_HEIGHT);
-  SDL_RenderDrawLine(renderer, 0, 1, WIN_WIDTH, 1);
-  SDL_RenderDrawLine(renderer, 0, WIN_HEIGHT - 1, WIN_WIDTH, WIN_HEIGHT - 1);
 
   // Ball
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
@@ -247,7 +246,13 @@ AdvanceState(GameState* state, Uint64 time, int push)
     EvaluateCollisionWithPaddle(&state->ball, &state->paddle[0]);
     EvaluateCollisionWithPaddle(&state->ball, &state->paddle[1]);
 
-    state->active_paddle = (state->ball.vx > 0.0);
+    if (state->ball.x <= state->paddle[0].x + PADDLE_WIDTH + BALL_RADIUS) {
+      state->active_paddle = 0;
+    } else if (state->ball.x >= state->paddle[1].x - BALL_RADIUS) {
+      state->active_paddle = 1;
+    } else {
+      state->active_paddle = (state->ball.vx > 0.0);
+    }
   }
 }
 
