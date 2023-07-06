@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(pong VERSION 0.1 LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
@@ -27,5 +28,6 @@ target_include_directories(SDL2_gfx PUBLIC ${sdl2_gfx_SOURCE_DIR})
 target_link_libraries(SDL2_gfx ${SDL2_LIBRARIES})
 
 # main
+add_compile_options(-Wpedantic -Wall -Wextra)
 add_executable(main main.c)
 target_link_libraries(main ${SDL2_LIBRARIES} SDL2_gfx)

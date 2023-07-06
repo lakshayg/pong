@@ -234,7 +234,7 @@ AdvanceState(GameState* state, Uint64 time, int push)
 }
 
 int
-main()
+main(void)
 {
   GameState state = {
     .active_paddle = 1,
