@@ -380,7 +380,15 @@ main(void)
                                         WIN_HEIGHT,
                                         0);
 
-  SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+  // Including SDL_RENDERER_PRESENTVSYNC in the renderer flags seems to
+  // stabilize the fps to ~120 on my machine and makes the rendering smoother.
+  // Before that, the fps was >1000 but the animation still looked jerky.
+  // TODO: What does SDL_RENDERER_PRESENTVSYNC do?
+  const Uint32 render_flags = SDL_RENDERER_ACCELERATED |
+                              SDL_RENDERER_PRESENTVSYNC |
+                              SDL_RENDERER_TARGETTEXTURE;
+  SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, render_flags);
+
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
   Game* game = CreateGame(renderer);
