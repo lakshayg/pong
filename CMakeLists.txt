@@ -17,7 +17,18 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(SDL2)
 set(SDL2_LIBRARIES SDL2 SDL2main)
 
+# SDL2_gfx
+FetchContent_Declare(
+  SDL2_gfx
+  URL https://sourceforge.net/projects/sdl2gfx/files/SDL2_gfx-1.0.4.tar.gz
+)
+FetchContent_Populate(SDL2_gfx)
+file(GLOB SDL2_gfx_srcs ${sdl2_gfx_SOURCE_DIR}/*.c)
+add_library(SDL2_gfx EXCLUDE_FROM_ALL ${SDL2_gfx_srcs})
+target_include_directories(SDL2_gfx PUBLIC ${sdl2_gfx_SOURCE_DIR})
+target_link_libraries(SDL2_gfx ${SDL2_LIBRARIES})
+
 # main
 add_compile_options(-Wpedantic -Wall -Wextra)
 add_executable(main main.c)
-target_link_libraries(main ${SDL2_LIBRARIES})
+target_link_libraries(main ${SDL2_LIBRARIES} SDL2_gfx)

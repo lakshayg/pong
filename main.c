@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "SDL2/SDL.h"
+#include "SDL2_gfxPrimitives.h"
 
 const int WIN_WIDTH = 800;
 const int WIN_HEIGHT = 600;
@@ -44,24 +45,16 @@ typedef struct Game
 } Game;
 
 void
-RenderCircle(SDL_Renderer* renderer, int cx, int cy, int radius)
+RenderCircleAA(SDL_Renderer* renderer, int cx, int cy, int radius)
 {
-  // TODO: Consider implementing anti-aliasing now
-  // that we are using textures to render the circle.
-  int x = radius;
-  int y = 0;
-  int error = 3 - 2 * radius;
-
-  while (x >= y) {
-    SDL_RenderDrawLine(renderer, cx - y, cy + x, cx + y, cy + x);
-    SDL_RenderDrawLine(renderer, cx - x, cy + y, cx + x, cy + y);
-    SDL_RenderDrawLine(renderer, cx - y, cy - x, cx + y, cy - x);
-    SDL_RenderDrawLine(renderer, cx - x, cy - y, cx + x, cy - y);
-    if (error > 0) {
-      error -= 4 * (--x);
-    }
-    error += 4 * (++y) + 2;
-  }
+  // This draws an anti-aliased circle
+  // Reference: https://stackoverflow.com/a/71170700/3033441
+  Uint8 r = 0, g = 0, b = 0, a = 0;
+  SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+  filledCircleRGBA(renderer, cx, cy, radius, r, g, b, SDL_ALPHA_OPAQUE);
+  aaellipseRGBA(renderer, cx, cy, radius, radius + 1, r, g, b, 128);
+  aaellipseRGBA(renderer, cx, cy, radius + 1, radius, r, g, b, 128);
+  aacircleRGBA(renderer, cx, cy, radius, r, g, b, SDL_ALPHA_OPAQUE);
 }
 
 SDL_Texture*
@@ -77,7 +70,7 @@ CreateBallTexture(SDL_Renderer* renderer)
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0); // transparent
   SDL_RenderClear(renderer);
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-  RenderCircle(renderer, BALL_RADIUS, BALL_RADIUS, BALL_RADIUS);
+  RenderCircleAA(renderer, BALL_RADIUS, BALL_RADIUS, BALL_RADIUS);
   SDL_SetRenderTarget(renderer, NULL);
   return texture;
 }
@@ -103,11 +96,11 @@ CreatePaddleTexture(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b)
   };
   SDL_SetRenderDrawColor(renderer, r, g, b, SDL_ALPHA_OPAQUE);
   SDL_RenderFillRect(renderer, &body);
-  RenderCircle(renderer, PADDLE_WIDTH_2, PADDLE_WIDTH_2, PADDLE_WIDTH_2);
-  RenderCircle(renderer,
-               PADDLE_WIDTH_2,
-               PADDLE_HEIGHT - PADDLE_WIDTH_2 - 1,
-               PADDLE_WIDTH_2);
+  RenderCircleAA(renderer, PADDLE_WIDTH_2, PADDLE_WIDTH_2, PADDLE_WIDTH_2);
+  RenderCircleAA(renderer,
+                 PADDLE_WIDTH_2,
+                 PADDLE_HEIGHT - PADDLE_WIDTH_2 - 1,
+                 PADDLE_WIDTH_2);
 
   SDL_SetRenderTarget(renderer, NULL);
   return texture;
