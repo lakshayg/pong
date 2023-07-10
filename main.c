@@ -46,6 +46,8 @@ typedef struct Game
 void
 RenderCircle(SDL_Renderer* renderer, int cx, int cy, int radius)
 {
+  // TODO: Consider implementing anti-aliasing now
+  // that we are using textures to render the circle.
   int x = radius;
   int y = 0;
   int error = 3 - 2 * radius;
