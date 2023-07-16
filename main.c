@@ -342,11 +342,18 @@ GameLoop(SDL_Renderer* renderer, Game* game)
           break;
         case SDL_KEYUP:
           switch (event.key.keysym.sym) {
-            case SDLK_DOWN:
             case SDLK_UP:
-            case SDLK_j:
             case SDLK_k:
-              push = 0;
+              if (push == -1) {
+                push = 0;
+              }
+              break;
+            case SDLK_DOWN:
+            case SDLK_j:
+              if (push == 1) {
+                push = 0;
+              }
+              break;
           }
           break;
       }
