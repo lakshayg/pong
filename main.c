@@ -83,9 +83,9 @@ CreatePaddleTexture(SDL_Renderer* renderer, Uint8 r, Uint8 g, Uint8 b)
                                            SDL_TEXTUREACCESS_TARGET,
                                            PADDLE_WIDTH,
                                            PADDLE_HEIGHT);
-  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  // NOTE: We don't use a transparent background for the paddle
   SDL_SetRenderTarget(renderer, texture);
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0); // transparent
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
   SDL_Rect body = {
